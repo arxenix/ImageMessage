@@ -1,8 +1,5 @@
 package com.bobacadodl.imgmessage;
 
-import com.sun.imageio.plugins.gif.GIFImageReader;
-import com.sun.imageio.plugins.gif.GIFImageReaderSpi;
-
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -26,24 +23,27 @@ public class AnimatedMessage {
     }
 
     public AnimatedMessage(File gifFile, int height, char imgChar) throws IOException {
-        this(ImageIO.createImageInputStream(gifFile), height, imgChar);
-    }
-
-    public AnimatedMessage(ImageInputStream imageInputStream, int height, char imgChar) throws IOException {
-        List<BufferedImage> frames = getFrames(imageInputStream);
+        List<BufferedImage> frames = getFrames(gifFile);
         images = new ImageMessage[frames.size()];
         for (int i = 0; i < frames.size(); i++) {
             images[i] = new ImageMessage(frames.get(i), height, imgChar);
         }
     }
 
-    public ArrayList<BufferedImage> getFrames(ImageInputStream imageInputStream) throws IOException {
-        ArrayList<BufferedImage> frames = new ArrayList<BufferedImage>();
-        ImageReader ir = new GIFImageReader(new GIFImageReaderSpi());
-        ir.setInput(ImageIO.createImageInputStream(imageInputStream));
-        for (int i = 0; i < ir.getNumImages(true); i++)
-            frames.add(ir.read(i));
-        return frames;
+    public List<BufferedImage> getFrames(File input) {
+        List<BufferedImage> images = new ArrayList<BufferedImage>();
+        try {
+            ImageReader reader = ImageIO.getImageReadersBySuffix("GIF").next();
+            ImageInputStream in = ImageIO.createImageInputStream(input);
+            reader.setInput(in);
+            for (int i = 0, count = reader.getNumImages(true); i < count; i++) {
+                BufferedImage image = reader.read(i); // read next frame from gif
+                images.add(image);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return images;
     }
 
     public ImageMessage current() {
