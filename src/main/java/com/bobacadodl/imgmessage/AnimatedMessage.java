@@ -15,7 +15,7 @@ import java.util.List;
  * Time: 10:41 PM
  */
 public class AnimatedMessage {
-    private ImageMessage[] images;
+    private final ImageMessage[] images;
     private int index = 0;
 
     public AnimatedMessage(ImageMessage... images) {

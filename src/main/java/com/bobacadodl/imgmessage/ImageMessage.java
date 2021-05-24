@@ -1,6 +1,6 @@
 package com.bobacadodl.imgmessage;
 
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.util.ChatPaginator;
 
@@ -36,7 +36,7 @@ public class ImageMessage {
             new Color(255, 255, 255),
     };
 
-    private String[] lines;
+    private final String[] lines;
 
     public ImageMessage(BufferedImage image, int height, char imgChar) {
         ChatColor[][] chatColors = toChatColorArray(image, height);
@@ -74,30 +74,36 @@ public class ImageMessage {
 
     private ChatColor[][] toChatColorArray(BufferedImage image, int height) {
         double ratio = (double) image.getHeight() / image.getWidth();
-        int width = (int) (height / ratio);
-        if (width > 10) width = 10;
-        BufferedImage resized = resizeImage(image, (int) (height / ratio), height);
+        int width = Math.min(10, (int) (height / ratio));
+        BufferedImage resized = resizeImage(image, width, height);
 
         ChatColor[][] chatImg = new ChatColor[resized.getWidth()][resized.getHeight()];
         for (int x = 0; x < resized.getWidth(); x++) {
             for (int y = 0; y < resized.getHeight(); y++) {
                 int rgb = resized.getRGB(x, y);
-                ChatColor closest = getClosestChatColor(new Color(rgb, true));
+                ChatColor closest;
+                try {
+                    closest = ChatColor.of(new Color(rgb, true));
+                }catch (NoSuchMethodError ignored) {
+                    closest = getClosestChatColor(new Color(rgb, true));
+                }
                 chatImg[x][y] = closest;
             }
         }
         return chatImg;
     }
 
-    private String[] toImgMessage(ChatColor[][] colors, char imgchar) {
+    private String[] toImgMessage(ChatColor[][] colors, char imgChar) {
         String[] lines = new String[colors[0].length];
-        for (int y = 0; y < colors[0].length; y++) {
-            String line = "";
-            for (int x = 0; x < colors.length; x++) {
-                ChatColor color = colors[x][y];
-                line += (color != null) ? colors[x][y].toString() + imgchar : TRANSPARENT_CHAR;
+        for (int i = 0; i < colors[0].length; i++) {
+
+            StringBuilder line = new StringBuilder();
+            for (ChatColor[] chatColors : colors) {
+                ChatColor color = chatColors[i];
+                line.append((color != null) ? chatColors[i].toString() + imgChar : TRANSPARENT_CHAR);
             }
-            lines[y] = line + ChatColor.RESET;
+            lines[i] = line.toString() + ChatColor.RESET;
+
         }
         return lines;
     }
