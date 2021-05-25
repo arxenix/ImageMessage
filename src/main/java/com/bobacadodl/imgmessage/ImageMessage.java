@@ -1,6 +1,6 @@
 package com.bobacadodl.imgmessage;
 
-import net.md_5.bungee.api.ChatColor;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.util.ChatPaginator;
 
@@ -39,7 +39,7 @@ public class ImageMessage {
     private final String[] lines;
 
     public ImageMessage(BufferedImage image, int height, char imgChar) {
-        ChatColor[][] chatColors = toChatColorArray(image, height);
+        Object[][] chatColors = toChatColorArray(image, height);
         lines = toImgMessage(chatColors, imgChar);
     }
 
@@ -72,20 +72,20 @@ public class ImageMessage {
         return this;
     }
 
-    private ChatColor[][] toChatColorArray(BufferedImage image, int height) {
+    private Object[][] toChatColorArray(BufferedImage image, int height) {
         double ratio = (double) image.getHeight() / image.getWidth();
         int width = Math.min(10, (int) (height / ratio));
         BufferedImage resized = resizeImage(image, width, height);
 
-        ChatColor[][] chatImg = new ChatColor[resized.getWidth()][resized.getHeight()];
+        Object[][] chatImg = new Object[resized.getWidth()][resized.getHeight()];
         for (int x = 0; x < resized.getWidth(); x++) {
             for (int y = 0; y < resized.getHeight(); y++) {
                 int rgb = resized.getRGB(x, y);
-                ChatColor closest;
-                try {
-                    closest = ChatColor.of(new Color(rgb, true));
-                }catch (NoSuchMethodError ignored) {
-                    closest = getClosestChatColor(new Color(rgb, true));
+                Object closest;
+                try{
+                    closest = net.md_5.bungee.api.ChatColor.of(new Color(rgb, true));
+                }catch (NoSuchMethodError ignored){
+                    closest = getClosestNonRGBChatColor(new Color(rgb, true));
                 }
                 chatImg[x][y] = closest;
             }
@@ -93,13 +93,12 @@ public class ImageMessage {
         return chatImg;
     }
 
-    private String[] toImgMessage(ChatColor[][] colors, char imgChar) {
+    private String[] toImgMessage(Object[][] colors, char imgChar) {
         String[] lines = new String[colors[0].length];
         for (int i = 0; i < colors[0].length; i++) {
-
             StringBuilder line = new StringBuilder();
-            for (ChatColor[] chatColors : colors) {
-                ChatColor color = chatColors[i];
+            for (Object[] chatColors : colors) {
+                Object color = chatColors[i];
                 line.append((color != null) ? chatColors[i].toString() + imgChar : TRANSPARENT_CHAR);
             }
             lines[i] = line.toString() + ChatColor.RESET;
@@ -136,7 +135,7 @@ public class ImageMessage {
 
     }
 
-    private ChatColor getClosestChatColor(Color color) {
+    private ChatColor getClosestNonRGBChatColor(Color color) {
         if (color.getAlpha() < 128) return null;
 
         int index = 0;
@@ -179,7 +178,7 @@ public class ImageMessage {
         return lines;
     }
 
-    public void sendToPlayer(Player player) {
+    public void send(Player player) {
         for (String line : lines) {
             player.sendMessage(line);
         }
